@@ -1,23 +1,22 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     token,
-    token::{Mint, MintTo, Token, TokenAccount, Transfer, Burn},
+    token::{Burn, Mint, MintTo, Token, TokenAccount, Transfer},
 };
 
-use crate::state::PoolState;
 use crate::error::ErrorCode;
+use crate::state::PoolState;
 
 pub fn add_liquidity(
-    ctx: Context<LiquidityOperation>, 
+    ctx: Context<LiquidityOperation>,
     amount_liq0: u64, // amount of token0 
     // amount of token1
-        // note: only needed on pool init deposit 
-        // ... can derive it once exchange is up
-    amount_liq1: u64, 
+    // note: only needed on pool init deposit
+    // ... can derive it once exchange is up
+    amount_liq1: u64,
 ) -> Result<()> {
-
-    let user_balance0 = ctx.accounts.user0.amount; 
-    let user_balance1 = ctx.accounts.user1.amount; 
+    let user_balance0 = ctx.accounts.user0.amount;
+    let user_balance1 = ctx.accounts.user1.amount;
 
     // ensure enough balance 
     require!(amount_liq0 <= user_balance0, ErrorCode::NotEnoughBalance);
@@ -25,22 +24,22 @@ pub fn add_liquidity(
 
     let vault_balance0 = ctx.accounts.vault0.amount;
     let vault_balance1 = ctx.accounts.vault1.amount;
-    let pool_state = &mut ctx.accounts.pool_state; 
-    
+    let pool_state = &mut ctx.accounts.pool_state;
+
     let deposit0 = amount_liq0;
     // vars to fill out during if statement  
-    let deposit1; 
+    let deposit1;
     let amount_to_mint;
-    
+
     // initial deposit
     msg!("vaults: {} {}", vault_balance0, vault_balance1);
     msg!("init deposits: {} {}", amount_liq0, amount_liq1);
 
     if vault_balance0 == 0 && vault_balance1 == 0 {
         // bit shift (a + b)/2
-        amount_to_mint = (amount_liq0 + amount_liq1) >> 1; 
+        amount_to_mint = (amount_liq0 + amount_liq1) >> 1;
         deposit1 = amount_liq1;
-    } else { 
+    } else {
         // require equal amount deposit based on pool exchange rate 
         let exchange10 = vault_balance1.checked_div(vault_balance0).unwrap();
         let amount_deposit_1 = amount_liq0.checked_mul(exchange10).unwrap();
@@ -55,8 +54,8 @@ pub fn add_liquidity(
         // then div and recast back 
         amount_to_mint = (
             (deposit1 as u128)
-            .checked_mul(pool_state.total_amount_minted as u128).unwrap()
-            .checked_div(vault_balance1 as u128).unwrap()
+                .checked_mul(pool_state.total_amount_minted as u128).unwrap()
+                .checked_div(vault_balance1 as u128).unwrap()
         ) as u64;
 
         msg!("pmint: {}", amount_to_mint);
@@ -68,55 +67,54 @@ pub fn add_liquidity(
     // give pool_mints 
     pool_state.total_amount_minted += amount_to_mint;
     let mint_ctx = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
+        ctx.accounts.token_program.to_account_info(),
         MintTo {
             to: ctx.accounts.user_pool_ata.to_account_info(),
             mint: ctx.accounts.pool_mint.to_account_info(),
             authority: ctx.accounts.pool_authority.to_account_info(),
-        }
+        },
     );
     let bump = *ctx.bumps.get("pool_authority").unwrap();
     let pool_key = ctx.accounts.pool_state.key();
     let pda_sign = &[b"authority", pool_key.as_ref(), &[bump]];
     token::mint_to(
-        mint_ctx.with_signer(&[pda_sign]), 
-        amount_to_mint
+        mint_ctx.with_signer(&[pda_sign]),
+        amount_to_mint,
     )?;
-    
+
     // deposit user funds into vaults
     token::transfer(CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
+        ctx.accounts.token_program.to_account_info(),
         Transfer {
-            from: ctx.accounts.user0.to_account_info(), 
+            from: ctx.accounts.user0.to_account_info(),
             to: ctx.accounts.vault0.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(), 
-        }
+            authority: ctx.accounts.owner.to_account_info(),
+        },
     ), deposit0)?;
 
     token::transfer(CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
+        ctx.accounts.token_program.to_account_info(),
         Transfer {
-            from: ctx.accounts.user1.to_account_info(), 
+            from: ctx.accounts.user1.to_account_info(),
             to: ctx.accounts.vault1.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(), 
-        }
+            authority: ctx.accounts.owner.to_account_info(),
+        },
     ), deposit1)?;
 
     Ok(())
 }
 
 pub fn remove_liquidity(
-    ctx: Context<LiquidityOperation>, 
+    ctx: Context<LiquidityOperation>,
     burn_amount: u64,
 ) -> Result<()> {
-
-    let pool_mint_balance = ctx.accounts.user_pool_ata.amount; 
+    let pool_mint_balance = ctx.accounts.user_pool_ata.amount;
     require!(burn_amount <= pool_mint_balance, ErrorCode::NotEnoughBalance);
 
     let pool_key = ctx.accounts.pool_state.key();
     let state = &mut ctx.accounts.pool_state;
     require!(state.total_amount_minted >= burn_amount, ErrorCode::BurnTooMuch);
-    
+
     let vault0_amount = ctx.accounts.vault0.amount as u128;
     let vault1_amount = ctx.accounts.vault1.amount as u128;
     let u128_burn_amount = burn_amount as u128;
@@ -135,67 +133,67 @@ pub fn remove_liquidity(
     let bump = *ctx.bumps.get("pool_authority").unwrap();
     let pda_sign = &[b"authority", pool_key.as_ref(), &[bump]];
     token::transfer(CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
+        ctx.accounts.token_program.to_account_info(),
         Transfer {
-            from: ctx.accounts.vault0.to_account_info(), 
+            from: ctx.accounts.vault0.to_account_info(),
             to: ctx.accounts.user0.to_account_info(),
-            authority: ctx.accounts.pool_authority.to_account_info(), 
-        }
+            authority: ctx.accounts.pool_authority.to_account_info(),
+        },
     ).with_signer(&[pda_sign]), amount0)?;
 
     token::transfer(CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
+        ctx.accounts.token_program.to_account_info(),
         Transfer {
-            from: ctx.accounts.vault1.to_account_info(), 
+            from: ctx.accounts.vault1.to_account_info(),
             to: ctx.accounts.user1.to_account_info(),
-            authority: ctx.accounts.pool_authority.to_account_info(), 
-        }
+            authority: ctx.accounts.pool_authority.to_account_info(),
+        },
     ).with_signer(&[pda_sign]), amount1)?;
 
     // burn pool tokens 
     token::burn(CpiContext::new(
-        ctx.accounts.token_program.to_account_info(), 
-        Burn { 
-            mint: ctx.accounts.pool_mint.to_account_info(), 
-            to: ctx.accounts.user_pool_ata.to_account_info(), 
-            authority:  ctx.accounts.owner.to_account_info(),
-        }
+        ctx.accounts.token_program.to_account_info(),
+        Burn {
+            mint: ctx.accounts.pool_mint.to_account_info(),
+            to: ctx.accounts.user_pool_ata.to_account_info(),
+            authority: ctx.accounts.owner.to_account_info(),
+        },
     ).with_signer(&[pda_sign]), burn_amount)?;
 
-    state.total_amount_minted -= burn_amount; 
+    state.total_amount_minted -= burn_amount;
 
     Ok(())
 }
 
 #[derive(Accounts)]
 pub struct LiquidityOperation<'info> {
-
-    // pool token accounts 
+    // pool token accounts
     #[account(mut)]
     pub pool_state: Box<Account<'info, PoolState>>,
-    
-    #[account(seeds=[b"authority", pool_state.key().as_ref()], bump)]
+
+    /// CHECK: This is not dangerous
+    #[account(seeds = [b"authority", pool_state.key().as_ref()], bump)]
     pub pool_authority: AccountInfo<'info>,
-    #[account(mut, 
-        constraint = vault0.mint == user0.mint,
-        seeds=[b"vault0", pool_state.key().as_ref()], bump)]
-    pub vault0: Box<Account<'info, TokenAccount>>, 
-    #[account(mut, 
-        constraint = vault1.mint == user1.mint,
-        seeds=[b"vault1", pool_state.key().as_ref()], bump)]
+    #[account(mut,
+    constraint = vault0.mint == user0.mint,
+    seeds = [b"vault0", pool_state.key().as_ref()], bump)]
+    pub vault0: Box<Account<'info, TokenAccount>>,
+    #[account(mut,
+    constraint = vault1.mint == user1.mint,
+    seeds = [b"vault1", pool_state.key().as_ref()], bump)]
     pub vault1: Box<Account<'info, TokenAccount>>,
-    #[account(mut, 
-        constraint = user_pool_ata.mint == pool_mint.key(),
-        seeds=[b"pool_mint", pool_state.key().as_ref()], bump)]
-    pub pool_mint: Box<Account<'info, Mint>>,  
-    
+    #[account(mut,
+    constraint = user_pool_ata.mint == pool_mint.key(),
+    seeds = [b"pool_mint", pool_state.key().as_ref()], bump)]
+    pub pool_mint: Box<Account<'info, Mint>>,
+
     // user token accounts 
     #[account(mut, has_one = owner)]
-    pub user0: Box<Account<'info, TokenAccount>>, 
+    pub user0: Box<Account<'info, TokenAccount>>,
     #[account(mut, has_one = owner)]
-    pub user1: Box<Account<'info, TokenAccount>>, 
+    pub user1: Box<Account<'info, TokenAccount>>,
     #[account(mut, has_one = owner)]
-    pub user_pool_ata: Box<Account<'info, TokenAccount>>, 
+    pub user_pool_ata: Box<Account<'info, TokenAccount>>,
     pub owner: Signer<'info>,
 
     // other 

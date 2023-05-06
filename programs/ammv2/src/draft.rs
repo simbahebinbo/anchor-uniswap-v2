@@ -1,24 +1,25 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token,
     associated_token::AssociatedToken,
-    token::{Mint, MintTo, Token, TokenAccount, Transfer, Burn},
+    token,
+    token::{Burn, Mint, MintTo, Token, TokenAccount, Transfer},
 };
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod concentrated_liquidity {
+    use std::task::Context;
     use super::*;
 
-    // accounts to initialize: 
-        // vault0, vault1 : holds tokens
-        // pool_mint : given to liquidity providers (LPs)
-        // pool_state : track # of tokens minted  -- can mint object track this? 
+    // accounts to initialize:
+    // vault0, vault1 : holds tokens
+    // pool_mint : given to liquidity providers (LPs)
+    // pool_state : track # of tokens minted  -- can mint object track this?
     pub fn initialize_pool(_ctx: Context<Blank>) -> Result<()> {
         Ok(())
     }
-        
+
     //       ** LP on uniswap ETH template for reference
     // ETH & tokenx pool 
     // 1. deposit ETH
@@ -41,25 +42,25 @@ pub mod concentrated_liquidity {
 
     // requiring equal amount of tokenX to tokenY ENABLES single pool mint token 
     pub fn add_liquidity(
-        ctx: Context<Blank>, 
+        ctx: Context<Blank>,
         user_liq0: u64, // amount of token0 
         // amount of token1
-            // note: only needed on pool init deposit 
-            // ... can derive it once exchange is up
-        user_liq1: u64, 
+        // note: only needed on pool init deposit
+        // ... can derive it once exchange is up
+        user_liq1: u64,
     ) -> Result<()> {
 
         // IF: 0th LP deposit 
-            // ** geometric mean for uniswap v2 
-            // amount_to_mint = sqrt(user_liq0 * user_liq1)
+        // ** geometric mean for uniswap v2
+        // amount_to_mint = sqrt(user_liq0 * user_liq1)
 
         // ELSE: 1th+ LP deposit
-            // get : pool_balance0, pool_balance1
-            // get : user_liq1 based on current pool exchange 
-                // define: depo_user_liq1 = user_liq0 * pool_balance1 / pool_balance0
-            // require : user_liq0 >= depo_user_liq1 -- they ok with deposit
-            // require : enough funds
-            // amount_to_mint = user_liq0 / pool_balance0 * total_pool_mints
+        // get : pool_balance0, pool_balance1
+        // get : user_liq1 based on current pool exchange
+        // define: depo_user_liq1 = user_liq0 * pool_balance1 / pool_balance0
+        // require : user_liq0 >= depo_user_liq1 -- they ok with deposit
+        // require : enough funds
+        // amount_to_mint = user_liq0 / pool_balance0 * total_pool_mints
 
         // ** trnsf token + pool token mint 
         // transfer token0: amount0_in -> vault0
@@ -73,8 +74,8 @@ pub mod concentrated_liquidity {
     }
 
     pub fn remove_liquidity(
-        ctx: Context<Blank>, 
-        burn_amount: u64
+        ctx: Context<Blank>,
+        burn_amount: u64,
     ) -> Result<()> {
         // require : pool_token_balance > burn_amount
         // let total_amount = total # of pool tokens minted 
@@ -95,10 +96,10 @@ pub mod concentrated_liquidity {
     // dst_token_account
     pub fn swap(
         ctx: Context<Blank>,
-        amount_in: u64, 
+        amount_in: u64,
     ) {
         // amount_in = amount_in * (1 - 0.03) [3% fee]
-            // transfer: fee -> vault
+        // transfer: fee -> vault
 
         // derive : balance of pool_src & pool_dst
         // compute : constant product formula output
