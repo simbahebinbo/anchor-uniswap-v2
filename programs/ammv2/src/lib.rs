@@ -12,6 +12,10 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod ammv2 {
     use super::*;
 
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        Ok(())
+    }
+
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
         fee_numerator: u64,
@@ -44,3 +48,5 @@ pub mod ammv2 {
     }
 }
 
+#[derive(Accounts)]
+pub struct Initialize {}

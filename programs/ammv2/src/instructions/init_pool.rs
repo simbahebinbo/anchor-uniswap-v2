@@ -25,8 +25,10 @@ pub struct InitializePool<'info> {
     pub mint0: Account<'info, Mint>,
     pub mint1: Account<'info, Mint>,
 
+    //here
     #[account(
     init,
+    space = 48,
     payer = payer,
     seeds = [b"pool_state", mint0.key().as_ref(), mint1.key().as_ref()],
     bump,

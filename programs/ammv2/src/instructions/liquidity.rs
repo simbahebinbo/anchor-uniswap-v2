@@ -155,7 +155,7 @@ pub fn remove_liquidity(
         ctx.accounts.token_program.to_account_info(),
         Burn {
             mint: ctx.accounts.pool_mint.to_account_info(),
-            to: ctx.accounts.user_pool_ata.to_account_info(),
+            from: ctx.accounts.user_pool_ata.to_account_info(), //here
             authority: ctx.accounts.owner.to_account_info(),
         },
     ).with_signer(&[pda_sign]), burn_amount)?;
