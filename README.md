@@ -13,8 +13,43 @@
 ## Implemented Tests
 
 - `tests/ammv2.ts`:
-    - intialize a new pool
+    - initialize a new pool
     - add liquidity (x3)
     - remove liquidity
     - swap
     - remove liquidity 
+
+
+
+
+# develop env
+```
+$ rm -rf $HOME/.cache/solana
+$ sh -c "$(curl -sSfL https://release.solana.com/v1.14.6/install)"
+$ solana --version
+solana-cli 1.14.6 (src:cfb2cbe1; feat:2390042548)
+$ solana config set --url localhost
+$ solana address
+$ solana-keygen new
+```
+
+```
+$ cargo install --git https://github.com/project-serum/anchor anchor-cli --locked 
+$ anchor --version
+anchor-cli 0.27.0
+```
+
+```
+$ anchor build --arch sbf
+```
+
+```
+$ anchor test --arch sbf
+```
+
+# reference
+
+```
+https://lorisleiva.com/create-a-solana-dapp-from-scratch/getting-started-with-solana-and-anchor 
+```
+
