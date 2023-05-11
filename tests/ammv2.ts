@@ -2,9 +2,9 @@ import * as anchor from "@coral-xyz/anchor";
 import {Program} from "@coral-xyz/anchor";
 // @ts-ignore
 import {Ammv2} from "../target/types/ammv2";
+import {assert} from "chai";
 import * as token from "@solana/spl-token";
 import * as web3 from "@solana/web3.js";
-import { assert } from "chai";
 
 
 interface Pool {
@@ -167,251 +167,246 @@ describe("ammv2", () => {
 
     let lp_user0: LPProvider; // to be filled in
     it("adds initial liquidity to the pool", async () => {
-      let lp_user_signer = web3.Keypair.generate();
-      let lp_user = lp_user_signer.publicKey;
-      let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
+        let lp_user_signer = web3.Keypair.generate();
+        let lp_user = lp_user_signer.publicKey;
+        let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
 
-      lp_user0 = { // here
-        signer: lp_user_signer,
-        user0: user0,
-        user1: user1,
-        poolAta: poolAta
-      };
+        lp_user0 = { // here
+            signer: lp_user_signer,
+            user0: user0,
+            user1: user1,
+            poolAta: poolAta
+        };
 
-      let [src_amount0_in, src_amount1_in] = [
-        lp_amount(50),
-        lp_amount(50)
-      ];
-      await program.rpc.addLiquidity(src_amount0_in, src_amount1_in, {
-        accounts: {
-          // pool stuff
-          poolAuthority: pool.poolAuth,
-          vault0: pool.vault0,
-          vault1: pool.vault1,
-          poolMint: pool.poolMint,
-          poolState: pool.poolState,
-          // LP user stuff
-          user0: user0,
-          user1: user1,
-          userPoolAta: poolAta,
-          owner: lp_user,
-          // other stuff
-          tokenProgram: token.TOKEN_PROGRAM_ID,
-        },
-        signers: [lp_user_signer]
-      });
+        let [src_amount0_in, src_amount1_in] = [
+            lp_amount(50),
+            lp_amount(50)
+        ];
+        await program.methods.addLiquidity(src_amount0_in, src_amount1_in)
+            .accounts({
+                // pool stuff
+                poolAuthority: pool.poolAuth,
+                vault0: pool.vault0,
+                vault1: pool.vault1,
+                poolMint: pool.poolMint,
+                poolState: pool.poolState,
+                // LP user stuff
+                user0: user0,
+                user1: user1,
+                userPoolAta: poolAta,
+                owner: lp_user,
+                // other stuff
+                tokenProgram: token.TOKEN_PROGRAM_ID,
+            }).signers([lp_user_signer]).rpc();
 
-      // intializing pool liquidity -- mints 1 of each ... = 100% of pool amount
-      let balance_mint0 = await get_token_balance(poolAta)
-      let poolState = await program.account.poolState.fetch(pool.poolState);
-      let amountTotalMint = poolState.totalAmountMinted.toNumber();
-      console.log("depsoiter0 pool mint: ", balance_mint0);
-      console.log("total amount mint", amountTotalMint);
+        // initializing pool liquidity -- mints 1 of each ... = 100% of pool amount
+        let balance_mint0 = await get_token_balance(poolAta)
+        let poolState = await program.account.poolState.fetch(pool.poolState);
+        let amountTotalMint = poolState.totalAmountMinted.toNumber();
+        console.log("depositor0 pool mint: ", balance_mint0);
+        console.log("total amount mint", amountTotalMint);
 
-      assert(balance_mint0 > 0);
+        assert(balance_mint0 > 0);
 
-      // ensure vault got some
-      let vb0 = await get_token_balance(pool.vault0);
-      let vb1 = await get_token_balance(pool.vault1);
-      console.log(vb0)
-      console.log(vb1)
+        // ensure vault got some
+        let vb0 = await get_token_balance(pool.vault0);
+        let vb1 = await get_token_balance(pool.vault1);
+        console.log(vb0)
+        console.log(vb1)
 
-      assert(vb0 > 0);
-      assert(vb1 > 0);
-      assert(vb1 == vb0); // 1:1
+        assert(vb0 > 0);
+        assert(vb1 > 0);
+        assert(vb1 == vb0); // 1:1
     })
 
     let lp_user1: LPProvider; // to be filled in
     it("adds 2nd liquidity to the pool", async () => {
-      let lp_user_signer = web3.Keypair.generate();
-      let lp_user = lp_user_signer.publicKey;
-      let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
+        let lp_user_signer = web3.Keypair.generate();
+        let lp_user = lp_user_signer.publicKey;
+        let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
 
-      lp_user1 = { // here
-        signer: lp_user_signer,
-        user0: user0,
-        user1: user1,
-        poolAta: poolAta
-      };
+        lp_user1 = { // here
+            signer: lp_user_signer,
+            user0: user0,
+            user1: user1,
+            poolAta: poolAta
+        };
 
-      let [src_amount0_in, src_amount1_in] = [
-        lp_amount(50),
-        lp_amount(50)
-      ];
-      await program.rpc.addLiquidity(src_amount0_in, src_amount1_in, {
-        accounts: {
-          // pool stuff
-          poolAuthority: pool.poolAuth,
-          vault0: pool.vault0,
-          vault1: pool.vault1,
-          poolMint: pool.poolMint,
-          poolState: pool.poolState,
-          // LP user stuff
-          user0: user0,
-          user1: user1,
-          userPoolAta: poolAta,
-          owner: lp_user,
-          // other stuff
-          tokenProgram: token.TOKEN_PROGRAM_ID,
-        },
-        signers: [lp_user_signer]
-      });
+        let [src_amount0_in, src_amount1_in] = [
+            lp_amount(50),
+            lp_amount(50)
+        ];
+        await program.methods.addLiquidity(src_amount0_in, src_amount1_in).accounts({
+            // pool stuff
+            poolAuthority: pool.poolAuth,
+            vault0: pool.vault0,
+            vault1: pool.vault1,
+            poolMint: pool.poolMint,
+            poolState: pool.poolState,
+            // LP user stuff
+            user0: user0,
+            user1: user1,
+            userPoolAta: poolAta,
+            owner: lp_user,
+            // other stuff
+            tokenProgram: token.TOKEN_PROGRAM_ID,
+        }).signers([lp_user_signer]).rpc();
 
-      // intializing pool liquidity -- mints 1 of each ... = 100% of pool amount
-      let balance_mint0 = await get_token_balance(poolAta)
-      let poolState = await program.account.poolState.fetch(pool.poolState);
-      let amountTotalMint = poolState.totalAmountMinted.toNumber();
-      console.log("depsoiter1 pool mint: ", balance_mint0);
-      console.log("total amount mint", amountTotalMint);
+        // initializing pool liquidity -- mints 1 of each ... = 100% of pool amount
+        let balance_mint0 = await get_token_balance(poolAta)
+        let poolState = await program.account.poolState.fetch(pool.poolState);
+        let amountTotalMint = poolState.totalAmountMinted.toNumber();
+        console.log("depositor1 pool mint: ", balance_mint0);
+        console.log("total amount mint", amountTotalMint);
 
-      assert(balance_mint0 > 0);
+        assert(balance_mint0 > 0);
 
-      // ensure vault got some
-      let vb0 = await get_token_balance(pool.vault0);
-      let vb1 = await get_token_balance(pool.vault1);
-      console.log(vb0)
-      console.log(vb1)
+        // ensure vault got some
+        let vb0 = await get_token_balance(pool.vault0);
+        let vb1 = await get_token_balance(pool.vault1);
+        console.log(vb0)
+        console.log(vb1)
 
-      assert(vb0 > 0);
-      assert(vb1 > 0);
-      assert(vb1 == vb0); // 1:1
+        assert(vb0 > 0);
+        assert(vb1 > 0);
+        assert(vb1 == vb0); // 1:1
     })
 
     it("adds 3rd liquidity to the pool", async () => {
-      let lp_user_signer = web3.Keypair.generate();
-      let lp_user = lp_user_signer.publicKey;
-      let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
+        let lp_user_signer = web3.Keypair.generate();
+        let lp_user = lp_user_signer.publicKey;
+        let [user0, user1, poolAta] = await setup_lp_provider(lp_user, 100);
 
-      let [src_amount0_in, src_amount1_in] = [
-        lp_amount(25),
-        lp_amount(100)
-      ];
-      await program.rpc.addLiquidity(src_amount0_in, src_amount1_in, {
-        accounts: {
-          // pool stuff
-          poolAuthority: pool.poolAuth,
-          vault0: pool.vault0,
-          vault1: pool.vault1,
-          poolMint: pool.poolMint,
-          poolState: pool.poolState,
-          // LP user stuff
-          user0: user0,
-          user1: user1,
-          userPoolAta: poolAta,
-          owner: lp_user,
-          // other stuff
-          tokenProgram: token.TOKEN_PROGRAM_ID,
-        },
-        signers: [lp_user_signer]
-      });
+        let [src_amount0_in, src_amount1_in] = [
+            lp_amount(25),
+            lp_amount(100)
+        ];
 
-      // intializing pool liquidity -- mints 1 of each ... = 100% of pool amount
-      let balance_mint0 = await get_token_balance(poolAta)
-      let poolState = await program.account.poolState.fetch(pool.poolState);
-      let amountTotalMint = poolState.totalAmountMinted.toNumber();
+        await program.methods.addLiquidity(src_amount0_in, src_amount1_in)
+            .accounts({
+                // pool stuff
+                poolAuthority: pool.poolAuth,
+                vault0: pool.vault0,
+                vault1: pool.vault1,
+                poolMint: pool.poolMint,
+                poolState: pool.poolState,
+                // LP user stuff
+                user0: user0,
+                user1: user1,
+                userPoolAta: poolAta,
+                owner: lp_user,
+                // other stuff
+                tokenProgram: token.TOKEN_PROGRAM_ID,
+            })
+            .signers([lp_user_signer]).rpc();
 
-      console.log("depsoiter pool mint: ", balance_mint0);
-      console.log("total amount mint", amountTotalMint);
+        // initializing pool liquidity -- mints 1 of each ... = 100% of pool amount
+        let balance_mint0 = await get_token_balance(poolAta)
+        let poolState = await program.account.poolState.fetch(pool.poolState);
+        let amountTotalMint = poolState.totalAmountMinted.toNumber();
 
-      // assert(balance_mint0 == 25 * 10 ** 9);
-      // assert(balance_mint0 + 100 * 10 ** 9 == amountTotalMint);
+        console.log("depositor pool mint: ", balance_mint0);
+        console.log("total amount mint", amountTotalMint);
 
-      // ensure vault got some
-      let vb0 = await get_token_balance(pool.vault0);
-      let vb1 = await get_token_balance(pool.vault1);
-      console.log(vb0)
-      console.log(vb1)
+        // assert(balance_mint0 == 25 * 10 ** 9);
+        // assert(balance_mint0 + 100 * 10 ** 9 == amountTotalMint);
 
-      assert(vb0 > 0);
-      assert(vb1 > 0);
-      assert(vb1 == vb0); // still 1:1
+        // ensure vault got some
+        let vb0 = await get_token_balance(pool.vault0);
+        let vb1 = await get_token_balance(pool.vault1);
+        console.log(vb0)
+        console.log(vb1)
+
+        assert(vb0 > 0);
+        assert(vb1 > 0);
+        assert(vb1 == vb0); // still 1:1
     })
 
 
     it("removes liquidity", async () => {
 
-      let b_user0 = await get_token_balance(lp_user0.user0);
-      let b_user1 = await get_token_balance(lp_user0.user1);
-      let balance_mint0 = await get_token_balance(lp_user0.poolAta)
+        let b_user0 = await get_token_balance(lp_user0.user0);
+        let b_user1 = await get_token_balance(lp_user0.user1);
+        let balance_mint0 = await get_token_balance(lp_user0.poolAta)
 
-      await program.rpc.removeLiquidity(lp_amount(50), {
-        accounts: {
-          // pool stuff
-          poolAuthority: pool.poolAuth,
-          vault0: pool.vault0,
-          vault1: pool.vault1,
-          poolMint: pool.poolMint,
-          poolState: pool.poolState,
-          // LP user stuff
-          user0: lp_user0.user0,
-          user1: lp_user0.user1,
-          userPoolAta: lp_user0.poolAta,
-          owner: lp_user0.signer.publicKey,
-          // other stuff
-          tokenProgram: token.TOKEN_PROGRAM_ID,
-        },
-        signers: [lp_user0.signer]
-      });
+        await program.methods.removeLiquidity(lp_amount(50))
+            .accounts({
+                // pool stuff
+                poolAuthority: pool.poolAuth,
+                vault0: pool.vault0,
+                vault1: pool.vault1,
+                poolMint: pool.poolMint,
+                poolState: pool.poolState,
+                // LP user stuff
+                user0: lp_user0.user0,
+                user1: lp_user0.user1,
+                userPoolAta: lp_user0.poolAta,
+                owner: lp_user0.signer.publicKey,
+                // other stuff
+                tokenProgram: token.TOKEN_PROGRAM_ID,
+            })
+            .signers([lp_user0.signer])
+            .rpc();
 
-      let b_user0_2 = await get_token_balance(lp_user0.user0);
-      let b_user1_2 = await get_token_balance(lp_user0.user1);
-      let balance_mint0_2 = await get_token_balance(lp_user0.poolAta)
+        let b_user0_2 = await get_token_balance(lp_user0.user0);
+        let b_user1_2 = await get_token_balance(lp_user0.user1);
+        let balance_mint0_2 = await get_token_balance(lp_user0.poolAta)
 
-      // console.log(
-      //   balance_mint0, balance_mint0_2,
-      //   b_user0, b_user0_2,
-      //   b_user1, b_user1_2
-      // )
+        // console.log(
+        //   balance_mint0, balance_mint0_2,
+        //   b_user0, b_user0_2,
+        //   b_user1, b_user1_2
+        // )
 
-      assert(balance_mint0 > balance_mint0_2);
-      assert(b_user0 < b_user0_2);
-      assert(b_user1 < b_user1_2);
+        assert(balance_mint0 > balance_mint0_2);
+        assert(b_user0 < b_user0_2);
+        assert(b_user1 < b_user1_2);
 
-      // ensure vault got some
-      let vb0 = await get_token_balance(pool.vault0);
-      let vb1 = await get_token_balance(pool.vault1);
-      console.log(vb0)
-      console.log(vb1)
+        // ensure vault got some
+        let vb0 = await get_token_balance(pool.vault0);
+        let vb1 = await get_token_balance(pool.vault1);
+        console.log(vb0)
+        console.log(vb1)
 
     });
 
-    it("swaps",async () => {
+    it("swaps", async () => {
         let swapper_signer = web3.Keypair.generate();
         let swapper = swapper_signer.publicKey;
 
         // setup token accs for deposit
         let mint0_ata = await token.createAssociatedTokenAccount(
-          connection, pool.payer, pool.mint0, swapper);
+            connection, pool.payer, pool.mint0, swapper);
         let mint1_ata = await token.createAssociatedTokenAccount(
-          connection, pool.payer, pool.mint1, swapper);
+            connection, pool.payer, pool.mint1, swapper);
 
         // setup initial balance of mints
         let amount = 100;
         await token.mintTo(connection,
-          pool.payer,
-          pool.mint0,
-          mint0_ata,
-          pool.auth,
-          amount * 10 ** n_decimals
+            pool.payer,
+            pool.mint0,
+            mint0_ata,
+            pool.auth,
+            amount * 10 ** n_decimals
         );
 
         let b0 = await get_token_balance(mint0_ata);
         let b1 = await get_token_balance(mint1_ata);
 
         // token0 -> token1
-        await program.rpc.swap(new anchor.BN(10 * 10 ** n_decimals), new anchor.BN(0),{
-          accounts: {
-              poolState: pool.poolState,
-              poolAuthority: pool.poolAuth,
-              vaultSrc: pool.vault0,
-              vaultDst: pool.vault1,
-              userSrc: mint0_ata,
-              userDst: mint1_ata,
-              owner: swapper,
-              tokenProgram: token.TOKEN_PROGRAM_ID,
-          },
-          signers: [swapper_signer]
-        });
+        await program.methods.swap(new anchor.BN(10 * 10 ** n_decimals), new anchor.BN(0))
+            .accounts({
+                poolState: pool.poolState,
+                poolAuthority: pool.poolAuth,
+                vaultSrc: pool.vault0,
+                vaultDst: pool.vault1,
+                userSrc: mint0_ata,
+                userDst: mint1_ata,
+                owner: swapper,
+                tokenProgram: token.TOKEN_PROGRAM_ID,
+            })
+            .signers([swapper_signer])
+            .rpc();
 
         let new_b0 = await get_token_balance(mint0_ata);
         let new_b1 = await get_token_balance(mint1_ata);
@@ -422,53 +417,51 @@ describe("ammv2", () => {
 
     it("removes liquidity after a swap", async () => {
 
-      let b_user0 = await get_token_balance(lp_user1.user0);
-      let b_user1 = await get_token_balance(lp_user1.user1);
-      let balance_mint0 = await get_token_balance(lp_user1.poolAta)
+        let b_user0 = await get_token_balance(lp_user1.user0);
+        let b_user1 = await get_token_balance(lp_user1.user1);
+        let balance_mint0 = await get_token_balance(lp_user1.poolAta)
 
-      await program.rpc.removeLiquidity(lp_amount(50), {
-        accounts: {
-          // pool stuff
-          poolAuthority: pool.poolAuth,
-          vault0: pool.vault0,
-          vault1: pool.vault1,
-          poolMint: pool.poolMint,
-          poolState: pool.poolState,
-          // LP user stuff
-          user0: lp_user1.user0,
-          user1: lp_user1.user1,
-          userPoolAta: lp_user1.poolAta,
-          owner: lp_user1.signer.publicKey,
-          // other stuff
-          tokenProgram: token.TOKEN_PROGRAM_ID,
-        },
-        signers: [lp_user1.signer]
-      });
+        await program.methods.removeLiquidity(lp_amount(50))
+            .accounts({
+                // pool stuff
+                poolAuthority: pool.poolAuth,
+                vault0: pool.vault0,
+                vault1: pool.vault1,
+                poolMint: pool.poolMint,
+                poolState: pool.poolState,
+                // LP user stuff
+                user0: lp_user1.user0,
+                user1: lp_user1.user1,
+                userPoolAta: lp_user1.poolAta,
+                owner: lp_user1.signer.publicKey,
+                // other stuff
+                tokenProgram: token.TOKEN_PROGRAM_ID,
+            })
+            .signers([lp_user1.signer])
+            .rpc();
 
-      let b_user0_2 = await get_token_balance(lp_user1.user0);
-      let b_user1_2 = await get_token_balance(lp_user1.user1);
-      let balance_mint0_2 = await get_token_balance(lp_user1.poolAta)
+        let b_user0_2 = await get_token_balance(lp_user1.user0);
+        let b_user1_2 = await get_token_balance(lp_user1.user1);
+        let balance_mint0_2 = await get_token_balance(lp_user1.poolAta)
 
-      console.log(
-        balance_mint0, balance_mint0_2,
-        b_user0, b_user0_2,
-        b_user1, b_user1_2
-      )
+        console.log(
+            balance_mint0, balance_mint0_2,
+            b_user0, b_user0_2,
+            b_user1, b_user1_2
+        )
 
-      assert(balance_mint0 > balance_mint0_2);
-      assert(b_user0 < b_user0_2);
-      assert(b_user1 < b_user1_2);
+        assert(balance_mint0 > balance_mint0_2);
+        assert(b_user0 < b_user0_2);
+        assert(b_user1 < b_user1_2);
 
-      // earned profit from previous swap! :D
-      assert(b_user0_2 > b_user0 + 50); // more here
-      assert(b_user1_2 < b_user1 + 50); // less here (impermantent loss)
+        // earned profit from previous swap! :D
+        assert(b_user0_2 > b_user0 + 50); // more here
+        assert(b_user1_2 < b_user1 + 50); // less here (impermanent loss)
 
-      // ensure vault got some
-      let vb0 = await get_token_balance(pool.vault0);
-      let vb1 = await get_token_balance(pool.vault1);
-      // console.log(vb0)
-      // console.log(vb1)
-
+        // ensure vault got some
+        let vb0 = await get_token_balance(pool.vault0);
+        let vb1 = await get_token_balance(pool.vault1);
+        // console.log(vb0)
+        // console.log(vb1)
     });
-
 });
