@@ -37,7 +37,7 @@ describe("ammv2", () => {
     let pool: Pool; // async describe in chai does not play nice :| so we pass this var around
     let n_decimals = 9
 
-    it("Initialized!", async () => {
+    it("Initialized", async () => {
         // Add your test here.
         const tx = await program.methods.initialize().accounts({}).rpc();
         console.log("Initialized transaction signature", tx);
