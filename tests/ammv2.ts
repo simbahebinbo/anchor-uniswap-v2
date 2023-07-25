@@ -35,7 +35,7 @@ describe("ammv2", () => {
     const program = anchor.workspace.Ammv2 as Program<Ammv2>;
 
     let pool: Pool; // async describe in chai does not play nice :| so we pass this var around
-    let n_decimals = 9
+    let n_decimals = 9;
 
     it("Initialized", async () => {
         // Add your test here.

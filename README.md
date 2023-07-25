@@ -27,7 +27,7 @@
 $ rm -rf $HOME/.cache/solana
 $ sh -c "$(curl -sSfL https://release.solana.com/v1.14.6/install)"
 $ solana --version
-solana-cli 1.14.6 (src:cfb2cbe1; feat:2390042548)
+solana-cli 1.16.5 (src:26777419; feat:2891131721, client:SolanaLabs)
 $ solana config set --url localhost
 $ solana address
 $ solana-keygen new
