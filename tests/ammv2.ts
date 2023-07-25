@@ -32,6 +32,7 @@ describe("ammv2", () => {
     let connection = provider.connection;
     anchor.setProvider(provider);
 
+
     const program = anchor.workspace.Ammv2 as Program<Ammv2>;
 
     let pool: Pool; // async describe in chai does not play nice :| so we pass this var around

@@ -74,9 +74,9 @@ pub fn add_liquidity(
             authority: ctx.accounts.pool_authority.to_account_info(),
         },
     );
-    let bump = *ctx.bumps.get("pool_authority").unwrap();
-    let pool_key = ctx.accounts.pool_state.key();
-    let pda_sign = &[b"authority", pool_key.as_ref(), &[bump]];
+    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let pool_key: Pubkey = ctx.accounts.pool_state.key();
+    let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
     token::mint_to(
         mint_ctx.with_signer(&[pda_sign]),
         amount_to_mint,
@@ -130,8 +130,8 @@ pub fn remove_liquidity(
     ];
 
     // deposit user funds into vaults
-    let bump = *ctx.bumps.get("pool_authority").unwrap();
-    let pda_sign = &[b"authority", pool_key.as_ref(), &[bump]];
+    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
     token::transfer(CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         Transfer {
@@ -174,26 +174,32 @@ pub struct LiquidityOperation<'info> {
     /// CHECK: This is not dangerous
     #[account(seeds = [b"authority", pool_state.key().as_ref()], bump)]
     pub pool_authority: AccountInfo<'info>,
+
     #[account(mut,
     constraint = vault0.mint == user0.mint,
     seeds = [b"vault0", pool_state.key().as_ref()], bump)]
     pub vault0: Box<Account<'info, TokenAccount>>,
+
     #[account(mut,
     constraint = vault1.mint == user1.mint,
     seeds = [b"vault1", pool_state.key().as_ref()], bump)]
     pub vault1: Box<Account<'info, TokenAccount>>,
+
     #[account(mut,
     constraint = user_pool_ata.mint == pool_mint.key(),
     seeds = [b"pool_mint", pool_state.key().as_ref()], bump)]
     pub pool_mint: Box<Account<'info, Mint>>,
 
-    // user token accounts 
+    // user token accounts
     #[account(mut, has_one = owner)]
     pub user0: Box<Account<'info, TokenAccount>>,
+
     #[account(mut, has_one = owner)]
     pub user1: Box<Account<'info, TokenAccount>>,
+
     #[account(mut, has_one = owner)]
     pub user_pool_ata: Box<Account<'info, TokenAccount>>,
+
     pub owner: Signer<'info>,
 
     // other 

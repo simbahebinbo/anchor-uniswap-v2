@@ -17,12 +17,10 @@
     - add liquidity (x3)
     - remove liquidity
     - swap
-    - remove liquidity 
-
-
-
+    - remove liquidity
 
 # develop env
+
 ```
 $ rm -rf $HOME/.cache/solana
 $ sh -c "$(curl -sSfL https://release.solana.com/v1.14.6/install)"

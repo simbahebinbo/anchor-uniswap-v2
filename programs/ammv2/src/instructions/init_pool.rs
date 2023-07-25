@@ -6,8 +6,8 @@ use anchor_spl::{
 
 use crate::state::PoolState;
 
-pub fn handler(
-    ctx: Context<InitializePool>,
+pub fn initialize_pool(
+    ctx: Context<InitializePoolOperation>,
     fee_numerator: u64,
     fee_denominator: u64,
 ) -> Result<()> {
@@ -19,16 +19,18 @@ pub fn handler(
     Ok(())
 }
 
+
 #[derive(Accounts)]
-pub struct InitializePool<'info> {
+pub struct InitializePoolOperation<'info> {
     // pool for token_x -> token_y 
     pub mint0: Account<'info, Mint>,
+
     pub mint1: Account<'info, Mint>,
 
     //here
     #[account(
     init,
-    space = 10240,
+    space = PoolState::init_size(),
     payer = payer,
     seeds = [b"pool_state", mint0.key().as_ref(), mint1.key().as_ref()],
     bump,
@@ -50,6 +52,7 @@ pub struct InitializePool<'info> {
     token::authority = pool_authority
     )]
     pub vault0: Box<Account<'info, TokenAccount>>,
+
     // account to hold token Y
     #[account(
     init,
@@ -71,13 +74,17 @@ pub struct InitializePool<'info> {
     mint::authority = pool_authority
     )]
     pub pool_mint: Box<Account<'info, Mint>>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
     // accounts required to init a new mint
     pub system_program: Program<'info, System>,
+
     pub token_program: Program<'info, Token>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
+
     pub rent: Sysvar<'info, Rent>,
 }
 

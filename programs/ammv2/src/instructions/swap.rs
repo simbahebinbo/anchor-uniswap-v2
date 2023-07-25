@@ -8,7 +8,7 @@ use crate::error::ErrorCode;
 use crate::state::PoolState;
 
 pub fn swap(
-    ctx: Context<Swap>,
+    ctx: Context<SwapOperation>,
     amount_in: u64,
     min_amount_out: u64,
 ) -> Result<()> {
@@ -37,9 +37,9 @@ pub fn swap(
     require!(output_amount >= min_amount_out as u128, ErrorCode::NotEnoughOut);
 
     // output_amount -> user_dst
-    let bump = *ctx.bumps.get("pool_authority").unwrap();
-    let pool_key = ctx.accounts.pool_state.key();
-    let pda_sign = &[b"authority", pool_key.as_ref(), &[bump]];
+    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let pool_key: Pubkey = ctx.accounts.pool_state.key();
+    let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
 
     token::transfer(CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
@@ -64,7 +64,7 @@ pub fn swap(
 }
 
 #[derive(Accounts)]
-pub struct Swap<'info> {
+pub struct SwapOperation<'info> {
     // pool token accounts
     #[account(mut)]
     pub pool_state: Box<Account<'info, PoolState>>,
@@ -72,11 +72,13 @@ pub struct Swap<'info> {
     /// CHECK: This is not dangerous
     #[account(mut, seeds = [b"authority", pool_state.key().as_ref()], bump)]
     pub pool_authority: AccountInfo<'info>,
+
     #[account(mut,
     constraint = vault_src.owner == pool_authority.key(),
     constraint = vault_src.mint == user_src.mint,
     )]
     pub vault_src: Box<Account<'info, TokenAccount>>,
+
     #[account(mut,
     constraint = vault_dst.owner == pool_authority.key(),
     constraint = vault_src.mint == user_src.mint,
@@ -88,10 +90,12 @@ pub struct Swap<'info> {
     has_one = owner,
     )]
     pub user_src: Box<Account<'info, TokenAccount>>,
+
     #[account(mut,
     has_one = owner,
     )]
     pub user_dst: Box<Account<'info, TokenAccount>>,
+
     pub owner: Signer<'info>,
 
     // other 

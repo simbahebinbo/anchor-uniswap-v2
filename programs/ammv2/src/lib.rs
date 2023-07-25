@@ -13,15 +13,16 @@ pub mod ammv2 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        msg!("initialize");
         Ok(())
     }
 
     pub fn initialize_pool(
-        ctx: Context<InitializePool>,
+        ctx: Context<InitializePoolOperation>,
         fee_numerator: u64,
         fee_denominator: u64,
     ) -> Result<()> {
-        init_pool::handler(ctx, fee_numerator, fee_denominator)
+        init_pool::initialize_pool(ctx, fee_numerator, fee_denominator)
     }
 
     pub fn remove_liquidity(
@@ -40,13 +41,14 @@ pub mod ammv2 {
     }
 
     pub fn swap(
-        ctx: Context<Swap>,
+        ctx: Context<SwapOperation>,
         amount_in: u64,
         min_amount_out: u64,
     ) -> Result<()> {
         swap::swap(ctx, amount_in, min_amount_out)
     }
 }
+
 
 #[derive(Accounts)]
 pub struct Initialize {}
