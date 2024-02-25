@@ -37,7 +37,9 @@ pub fn swap(
     require!(output_amount >= min_amount_out as u128, ErrorCode::NotEnoughOut);
 
     // output_amount -> user_dst
-    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    // let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let bump: u8 = ctx.bumps.pool_authority;
+
     let pool_key: Pubkey = ctx.accounts.pool_state.key();
     let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
 

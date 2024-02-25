@@ -1,12 +1,12 @@
 [package]
-name = "ammv2"
+name = "amm"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "ammv2"
+name = "amm"
 
 [features]
 no-entrypoint = []
@@ -16,7 +16,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.28.0"
-anchor-spl = { version = "0.28.0" }
-spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
-
+anchor-lang = "0.29.0"
+anchor-spl = { version = "0.29.0" }
+spl-token = { version = "4.0.1", features = ["no-entrypoint"] }

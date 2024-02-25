@@ -74,7 +74,9 @@ pub fn add_liquidity(
             authority: ctx.accounts.pool_authority.to_account_info(),
         },
     );
-    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    // let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let bump: u8 = ctx.bumps.pool_authority;
+
     let pool_key: Pubkey = ctx.accounts.pool_state.key();
     let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
     token::mint_to(
@@ -130,7 +132,9 @@ pub fn remove_liquidity(
     ];
 
     // deposit user funds into vaults
-    let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    // let bump: u8 = *ctx.bumps.get("pool_authority").unwrap();
+    let bump: u8 = ctx.bumps.pool_authority;
+
     let pda_sign: &[&[u8]] = &[b"authority", pool_key.as_ref(), &[bump]];
     token::transfer(CpiContext::new(
         ctx.accounts.token_program.to_account_info(),

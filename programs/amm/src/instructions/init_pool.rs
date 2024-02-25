@@ -87,4 +87,3 @@ pub struct InitializePoolOperation<'info> {
 
     pub rent: Sysvar<'info, Rent>,
 }
-
